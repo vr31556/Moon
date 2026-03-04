@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Safa - My Quiet Universe</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Montserrat:wght@200;300&display=swap');
+
+        :root {
+            --bg-deep: #020305;
+            --bg-navy: #0a0f1a;
+            --text-main: #f4f4f4;
+            --orange-warm: #e89a5e;
+            --orange-glow: rgba(232, 154, 94, 0.5);
+            --font-serif: 'Cormorant Garamond', serif;
+            --font-sans: 'Montserrat', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            font-family: var(--font-serif);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Film Grain Overlay */
+        .grain {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 999;
+            background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            opacity: 0.05;
+            mix-blend-mode: overlay;
+        }
+
+        /* Night Sky Background */
+        .sky-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at bottom right, var(--bg-navy) 0%, var(--bg-deep) 70%, #000 100%);
+            opacity: 0;
+            transition: opacity 4s ease-in-out, filter 4s ease-in-out;
+            z-index: 1;
+        }
+
+        .sky-container.dimmed {
+            filter: brightness(0.4);
+        }
+
+        /* Ambient Flare from Shooting Star */
+        .sky-flare {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(232, 154, 94, 0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Stars */
+        .stars {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.1; transform: scale(0.8); }
+            100% { opacity: 0.9; transform: scale(1.2); box-shadow: 0 0 4px rgba(255,255,255,0.3); }
+        }
+
+        /* Shooting Star */
+        .shooting-star {
+            position: absolute;
+            top: 20%; left: -20%;
+            width: 250px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 240, 200, 0.8), #fff);
+            box-shadow: 0 0 15px 2px rgba(255, 220, 150, 0.4);
+            border-radius: 50%;
+            transform: rotate(20deg) translateX(0);
+            opacity: 0;
+            z-index: 2;
+        }
+
+        .shooting-star.animate {
+            animation: shoot 3s ease-out forwards;
+        }
+
+        @keyframes shoot {
+            0% { opacity: 0; transform: rotate(20deg) translateX(0) scaleX(0.2); }
+            10% { opacity: 1; transform: rotate(20deg) translateX(15vw) scaleX(1); }
+            70% { opacity: 1; }
+            100% { opacity: 0; transform: rotate(20deg) translateX(120vw) scaleX(0.1); }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            bottom: -10px;
+            background: var(--orange-warm);
+            border-radius: 50%;
+            box-shadow: 0 0 8px 1px var(--orange-glow);
+            opacity: 0;
+            animation: floatUp 15s linear forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-60vh) translateX(30px); opacity: 0; }
+        }
+
+        /* Text Scenes */
+        .scene {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            transition: opacity 2.5s ease-in-out;
+            pointer-events: none;
+        }
+
+        .line {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 3s ease-in-out, transform 3s ease-out;
+            font-size: clamp(1.6rem, 5vw, 2.5rem);
+            font-weight: 300;
+            letter-spacing: 1px;
+            margin-bottom: 2vh;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .line.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .name-glow {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-style: italic;
+            color: var(--orange-warm);
+            text-shadow: 0 0 20px rgba(232, 154, 94, 0.4);
+            margin-top: 2vh;
+        }
+
+        .subtext {
+            font-family: var(--font-sans);
+            font-size: clamp(0.7rem, 2.5vw, 1rem);
+            font-weight: 200;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #b0b5c0;
+            margin-top: 3vh;
+        }
+
+        .final-message {
+            font-size: clamp(1.5rem, 5vw, 2.2rem);
+            font-style: italic;
+            color: var(--orange-warm);
+            line-height: 1.6;
+            text-shadow: 0 0 15px rgba(232, 154, 94, 0.3);
+        }
+
+        /* Cat & Moon SVG Container */
+        .cat-moon-container {
+            position: absolute;
+            bottom: 6vh;
+            right: 4vw;
+            width: 45vw;
+            max-width: 220px;
+            height: 45vw;
+            max-height: 220px;
+            opacity: 0;
+            transition: opacity 4s ease-in-out;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .cat-glow {
+            filter: drop-shadow(0 0 5px rgba(232, 154, 94, 0.4));
+        }
+
+        .cat-breathing {
+            animation: breathe 5s ease-in-out infinite;
+            transform-origin: 55px 77px;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scaleY(1) scaleX(1); }
+            50% { transform: scaleY(1.02) scaleX(0.99); }
+        }
+
+        #cat-head {
+            transform-origin: 59px 52px;
+            transition: transform 2.5s ease-in-out;
+        }
+
+        /* Interaction Button */
+        .btn-container {
+            position: absolute;
+            bottom: 12vh;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        .btn-stay {
+            background: transparent;
+            border: 1px solid rgba(232, 154, 94, 0.3);
+            color: rgba(232, 154, 94, 0.9);
+            padding: 12px 30px;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border-radius: 40px;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 1s ease-in-out;
+            backdrop-filter: blur(5px);
+        }
+
+        .btn-stay.visible {
+            opacity: 1;
+            pointer-events: auto;
+            animation: pulseGlow 4s infinite alternate;
+        }
+
+        .btn-stay:active {
+            transform: scale(0.95);
+            background: rgba(232, 154, 94, 0.1);
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 0 rgba(232, 154, 94, 0); border-color: rgba(232, 154, 94, 0.3); }
+            100% { box-shadow: 0 0 15px rgba(232, 154, 94, 0.15); border-color: rgba(232, 154, 94, 0.7); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grain"></div>
+
+    <div class="sky-container" id="sky">
+        <div class="stars" id="stars"></div>
+        <div class="sky-flare" id="sky-flare"></div>
+        <div class="shooting-star" id="shooting-star"></div>
+    </div>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="cat-moon-container" id="cat-container">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" class="cat-glow">
+            <path d="M 50 10 A 40 40 0 1 0 90 80 A 45 45 0 1 1 50 10 Z" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.3"/>
+            
+            <g class="cat-breathing">
+                <path d="M 55 77 C 40 77, 32 70, 36 62" fill="none" stroke="var(--orange-warm)" stroke-width="0.8" stroke-linecap="round"/>
+                <path d="M 55 77 C 75 75, 75 55, 63 48 C 55 48, 45 60, 55 77 Z" fill="#05070a" stroke="var(--orange-warm)" stroke-width="0.8" stroke-linejoin="round"/>
+                <g id="cat-head">
+                    <circle cx="59" cy="46" r="6" fill="#05070a" stroke="var(--orange-warm)" stroke-width="0.8"/>
+                    <path d="M 55 42 L 53 34 L 59 39 Z" fill="#05070a" stroke="var(--orange-warm)" stroke-width="0.8" stroke-linejoin="round"/>
+                    <path d="M 61 41 L 65 34 L 64 42 Z" fill="#05070a" stroke="var(--orange-warm)" stroke-width="0.8" stroke-linejoin="round"/>
+                </g>
+            </g>
+        </svg>
+    </div>
+
+    <div class="scene" id="scene1">
+        <div class="line" id="s1-l1">Out of 8 billion people...</div>
+        <div class="line" id="s1-l2">I found you.</div>
+        <div class="line name-glow" id="s1-l3">Safa.</div>
+    </div>
+
+    <div class="scene" id="scene2">
+        <div class="line" id="s2-l1">And somehow...</div>
+        <div class="line" id="s2-l2">You became my favorite place.</div>
+    </div>
+
+    <div class="scene" id="scene3">
+        <div class="line" id="s3-l1">It was always you, Safa.</div>
+        <div class="line subtext" id="s3-l2">My quiet universe.</div>
+    </div>
+
+    <div class="scene" id="scene-final">
+        <div class="line final-message" id="sf-l1">You are my safe place.<br>Always.</div>
+    </div>
+
+    <div class="btn-container">
+        <button class="btn-stay" id="btn-stay">Tap to stay a little longer</button>
+    </div>
+
+    <script>
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        const show = (id) => document.getElementById(id).classList.add('visible');
+        const hide = (id) => document.getElementById(id).classList.remove('visible');
+        const fadeOutScene = (id) => document.getElementById(id).style.opacity = '0';
+
+        // Initialize Starfield
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for(let i = 0; i < 150; i++) {
+                let star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                
+                let size = Math.random() * 1.5;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                
+                let opacity = Math.random() * 0.6 + 0.1;
+                star.style.opacity = opacity;
+                
+                if(Math.random() > 0.6) {
+                    star.style.animation = `twinkle ${Math.random() * 5 + 3}s infinite alternate`;
+                    star.style.animationDelay = `${Math.random() * 5}s`;
+                }
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Generate Warm Floating Particles
+        let particleInterval;
+        function startParticles() {
+            particleInterval = setInterval(() => {
+                let p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (Math.random() * 8 + 12) + 's';
+                
+                let size = Math.random() * 2 + 1;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                
+                document.getElementById('particles').appendChild(p);
+                
+                // Cleanup
+                setTimeout(() => p.remove(), 20000);
+            }, 1000);
+        }
+
+        // Main Cinematic Sequence
+        async function runCinematic() {
+            createStars();
+
+            // T+1.5s: Fade in deep night sky & subtle cat silhouette
+            await wait(1500);
+            document.getElementById('sky').style.opacity = '1';
+            document.getElementById('cat-container').style.opacity = '1';
+
+            // T+3.5s: Scene 1
+            await wait(2500);
+            show('s1-l1');
+
+            await wait(3000);
+            show('s1-l2');
+
+            await wait(2500);
+            show('s1-l3'); // Safa.
+
+            await wait(4500);
+            fadeOutScene('scene1');
+
+            // Cinematic Moment: Shooting Star & Ambient Flare
+            await wait(2500);
+            document.getElementById('shooting-star').classList.add('animate');
+            let flare = document.getElementById('sky-flare');
+            flare.style.opacity = '0.4';
+            setTimeout(() => { flare.style.opacity = '0'; }, 2000);
+
+            // Scene 2
+            await wait(3000);
+            show('s2-l1');
+
+            await wait(3000);
+            show('s2-l2');
+
+            await wait(4500);
+            fadeOutScene('scene2');
+
+            // Scene 3 (Climax)
+            await wait(2500);
+            document.getElementById('sky').classList.add('dimmed');
+            startParticles();
+            
+            show('s3-l1');
+            await wait(1500);
+            show('s3-l2');
+
+            // Final interaction
+            await wait(4500);
+            show('btn-stay');
+        }
+
+        // Interactive Final Touch
+        document.getElementById('btn-stay').addEventListener('click', async () => {
+            hide('btn-stay');
+            fadeOutScene('scene3');
+
+            // Cat looks up subtly
+            document.getElementById('cat-head').style.transform = 'rotate(-12deg) translate(-1px, 1px)';
+
+            await wait(2500);
+            show('sf-l1');
+        });
+
+        // Start sequence on load
+        window.onload = runCinematic;
+    </script>
+</body>
+</html>
